@@ -40,9 +40,12 @@ async function getAthleteProfile(athleteId, apiKey) {
 
 // ── Get this month's cycling stats for one athlete ────────────
 async function getMonthlyStats(athlete) {
-  const now    = new Date();
-  const oldest = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-  const newest = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-31`;
+  const now     = new Date();
+  const pad     = n => String(n).padStart(2, '0');
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const oldest  = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
+  const newest  = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${lastDay}`;
+  console.log(`[${athlete.name}] Fetching activities ${oldest} → ${newest}`);
 
   const { data } = await axios.get(
     `https://intervals.icu/api/v1/athlete/${athlete.athleteId}/activities`,
@@ -52,18 +55,26 @@ async function getMonthlyStats(athlete) {
     }
   );
 
-  const rideTypes = ['ride', 'virtualride', 'ebike', 'gravel', 'mountainbike', 'cycling'];
+  // Log all activity types so we can see what intervals.icu returns
+  const typesFound = [...new Set(data.map(a => a.type))];
+  console.log(`[${athlete.name}] ${data.length} activities found. Types: ${typesFound.join(', ') || 'none'}`);
+
+  // intervals.icu type names — be broad to catch all cycling variants
+  const rideTypes = ['ride', 'virtual', 'ebike', 'gravel', 'mountain', 'cycling', 'bike', 'velomobile'];
 
   let totalKm = 0, totalElevation = 0, totalRides = 0;
 
   for (const act of data) {
     const type = (act.type || '').toLowerCase();
-    if (rideTypes.some(t => type.includes(t))) {
+    const isCycling = rideTypes.some(t => type.includes(t));
+    if (isCycling) {
       totalKm        += (act.distance || 0) / 1000;
       totalElevation += (act.total_elevation_gain || 0);
       totalRides++;
     }
   }
+
+  console.log(`[${athlete.name}] Matched ${totalRides} cycling activities → ${totalKm.toFixed(1)} km, ${totalElevation} m elevation`);
 
   return {
     km:        Math.round(totalKm * 10) / 10,
@@ -109,8 +120,13 @@ app.get('/api/leaderboard', async (req, res) => {
 
   const results = await Promise.allSettled(
     athletes.map(async (a) => {
-      const stats = await getMonthlyStats(a);
-      return { name: a.name, ...stats };
+      try {
+        const stats = await getMonthlyStats(a);
+        return { name: a.name, ...stats };
+      } catch (err) {
+        console.error(`[${a.name}] Failed:`, err.response?.status, err.response?.data || err.message);
+        throw err;
+      }
     })
   );
 
