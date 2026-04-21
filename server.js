@@ -1,46 +1,84 @@
 // ─────────────────────────────────────────────────────────────
 //  Cycling Leaderboard – Backend Server
-//  intervals.icu API (Basic Auth with personal API keys)
+//  intervals.icu API + Turso (persistent SQLite in the cloud)
 // ─────────────────────────────────────────────────────────────
 require('dotenv').config();
-const express = require('express');
-const axios   = require('axios');
-const fs      = require('fs');
-const path    = require('path');
+const express    = require('express');
+const axios      = require('axios');
+const path       = require('path');
+const { createClient } = require('@libsql/client');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const { PORT = 3000 } = process.env;
+const { PORT = 3000, TURSO_URL, TURSO_TOKEN } = process.env;
 
-// ── File-based database ───────────────────────────────────────
-const DB_FILE      = path.join(__dirname, 'data', 'athletes.json');
-const HISTORY_FILE = path.join(__dirname, 'data', 'history.json');
+// ── Turso database client ─────────────────────────────────────
+const db = createClient({
+  url:       TURSO_URL   || 'file:local.db',  // falls back to local SQLite for dev
+  authToken: TURSO_TOKEN || undefined,
+});
 
-function loadDB() {
-  if (!fs.existsSync(DB_FILE)) return {};
-  try { return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); }
-  catch { return {}; }
+// ── Create tables if they don't exist ────────────────────────
+async function initDB() {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS athletes (
+      athlete_id TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      api_key    TEXT NOT NULL
+    )
+  `);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS history (
+      month    TEXT PRIMARY KEY,
+      saved_at TEXT NOT NULL,
+      riders   TEXT NOT NULL
+    )
+  `);
+  console.log('[db] Tables ready.');
 }
 
-function saveDB(data) {
-  fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+// ── Athlete helpers ───────────────────────────────────────────
+async function loadAthletes() {
+  const result = await db.execute('SELECT athlete_id, name, api_key FROM athletes');
+  return result.rows.map(r => ({ athleteId: r.athlete_id, name: r.name, apiKey: r.api_key }));
 }
 
-function loadHistory() {
-  if (!fs.existsSync(HISTORY_FILE)) return [];
-  try { return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8')); }
-  catch { return []; }
+async function saveAthlete(athleteId, name, apiKey) {
+  await db.execute({
+    sql: 'INSERT OR REPLACE INTO athletes (athlete_id, name, api_key) VALUES (?, ?, ?)',
+    args: [athleteId, name, apiKey],
+  });
 }
 
-function saveHistory(data) {
-  fs.mkdirSync(path.dirname(HISTORY_FILE), { recursive: true });
-  fs.writeFileSync(HISTORY_FILE, JSON.stringify(data, null, 2));
+async function deleteAthlete(athleteId) {
+  await db.execute({ sql: 'DELETE FROM athletes WHERE athlete_id = ?', args: [athleteId] });
 }
 
-// ── Fetch athlete profile ─────────────────────────────────────
+// ── History helpers ───────────────────────────────────────────
+async function loadHistory() {
+  const result = await db.execute('SELECT month, saved_at, riders FROM history ORDER BY month DESC');
+  return result.rows.map(r => ({
+    month:   r.month,
+    savedAt: r.saved_at,
+    riders:  JSON.parse(r.riders),
+  }));
+}
+
+async function saveHistoryEntry(month, savedAt, riders) {
+  await db.execute({
+    sql:  'INSERT OR IGNORE INTO history (month, saved_at, riders) VALUES (?, ?, ?)',
+    args: [month, savedAt, JSON.stringify(riders)],
+  });
+}
+
+async function historyEntryExists(month) {
+  const result = await db.execute({ sql: 'SELECT 1 FROM history WHERE month = ?', args: [month] });
+  return result.rows.length > 0;
+}
+
+// ── Fetch athlete profile from intervals.icu ──────────────────
 async function getAthleteProfile(athleteId, apiKey) {
   const { data } = await axios.get(
     `https://intervals.icu/api/v1/athlete/${athleteId}`,
@@ -55,7 +93,7 @@ async function getMonthlyStats(athlete, year, month) {
   const lastDay = new Date(year, month, 0).getDate();
   const oldest  = `${year}-${pad(month)}-01`;
   const newest  = `${year}-${pad(month)}-${lastDay}`;
-  console.log(`[${athlete.name}] Fetching activities ${oldest} → ${newest}`);
+  console.log(`[${athlete.name}] Fetching ${oldest} → ${newest}`);
 
   const { data } = await axios.get(
     `https://intervals.icu/api/v1/athlete/${athlete.athleteId}/activities`,
@@ -81,7 +119,6 @@ async function getMonthlyStats(athlete, year, month) {
   }
 
   console.log(`[${athlete.name}] → ${totalKm.toFixed(1)} km, ${totalElevation} m, ${totalRides} rides`);
-
   return {
     km:        Math.round(totalKm * 10) / 10,
     elevation: Math.round(totalElevation),
@@ -91,8 +128,7 @@ async function getMonthlyStats(athlete, year, month) {
 
 // ── Fetch leaderboard for a given month ───────────────────────
 async function fetchLeaderboard(year, month) {
-  const db       = loadDB();
-  const athletes = Object.values(db);
+  const athletes = await loadAthletes();
   if (athletes.length === 0) return [];
 
   const results = await Promise.allSettled(
@@ -107,62 +143,54 @@ async function fetchLeaderboard(year, month) {
     })
   );
 
-  return results
-    .filter(r => r.status === 'fulfilled')
-    .map(r => r.value);
+  return results.filter(r => r.status === 'fulfilled').map(r => r.value);
 }
 
 // ── Snapshot: save final standings for a completed month ──────
 async function snapshotMonth(year, month) {
   const key = `${year}-${String(month).padStart(2, '0')}`;
-  const history = loadHistory();
 
-  // Don't double-snapshot the same month
-  if (history.find(h => h.month === key)) {
+  if (await historyEntryExists(key)) {
     console.log(`[snapshot] ${key} already exists, skipping.`);
     return;
   }
 
-  console.log(`[snapshot] Saving final standings for ${key}…`);
+  console.log(`[snapshot] Saving standings for ${key}…`);
   const riders = await fetchLeaderboard(year, month);
 
   if (riders.length === 0) {
-    console.log(`[snapshot] No riders found for ${key}, skipping.`);
+    console.log(`[snapshot] No riders for ${key}, skipping.`);
     return;
   }
 
-  history.unshift({ month: key, savedAt: new Date().toISOString(), riders });
-  saveHistory(history);
+  await saveHistoryEntry(key, new Date().toISOString(), riders);
   console.log(`[snapshot] Saved ${riders.length} riders for ${key}.`);
 }
 
 // ── Check on startup if last month needs snapshotting ─────────
 async function checkMissedSnapshot() {
   const now       = new Date();
-  const lastMonth = new Date(now.getFullYear(), now.getMonth(), 0); // last day of prev month
+  const lastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
   const year      = lastMonth.getFullYear();
   const month     = lastMonth.getMonth() + 1;
   const key       = `${year}-${String(month).padStart(2, '0')}`;
-  const history   = loadHistory();
 
-  if (!history.find(h => h.month === key)) {
+  if (!(await historyEntryExists(key))) {
     console.log(`[snapshot] Missing snapshot for ${key}, creating now…`);
     await snapshotMonth(year, month);
   }
 }
 
-// ── Schedule end-of-month snapshot ───────────────────────────
-// Runs every hour; snapshots when we've just crossed into a new month
+// ── Schedule end-of-month snapshot (checks every hour) ───────
 let lastCheckedMonth = new Date().getMonth();
-
 setInterval(async () => {
   const now = new Date();
   if (now.getMonth() !== lastCheckedMonth) {
     lastCheckedMonth = now.getMonth();
-    const prev      = new Date(now.getFullYear(), now.getMonth(), 0);
+    const prev = new Date(now.getFullYear(), now.getMonth(), 0);
     await snapshotMonth(prev.getFullYear(), prev.getMonth() + 1);
   }
-}, 60 * 60 * 1000); // every hour
+}, 60 * 60 * 1000);
 
 // ── Routes ────────────────────────────────────────────────────
 
@@ -175,9 +203,7 @@ app.post('/api/join', async (req, res) => {
   try {
     const profile     = await getAthleteProfile(athleteId, apiKey);
     const displayName = profile.name || `Athlete ${athleteId}`;
-    const db          = loadDB();
-    db[athleteId]     = { athleteId, apiKey, name: displayName };
-    saveDB(db);
+    await saveAthlete(athleteId, displayName, apiKey);
     res.json({ success: true, name: displayName });
   } catch (err) {
     if (err.response?.status === 401 || err.response?.status === 403)
@@ -195,12 +221,11 @@ app.get('/api/leaderboard', async (req, res) => {
 });
 
 // Full history
-app.get('/api/history', (req, res) => {
-  res.json(loadHistory());
+app.get('/api/history', async (req, res) => {
+  res.json(await loadHistory());
 });
 
-// Manually trigger a snapshot for a specific month (admin use)
-// e.g. POST /api/snapshot { "year": 2026, "month": 3 }
+// Manually trigger a snapshot (admin use)
 app.post('/api/snapshot', async (req, res) => {
   const { year, month } = req.body;
   if (!year || !month)
@@ -215,18 +240,14 @@ app.post('/api/snapshot', async (req, res) => {
 
 // Remove an athlete
 app.delete('/api/athlete/:id', (req, res) => {
-  const db = loadDB();
-  if (db[req.params.id]) {
-    delete db[req.params.id];
-    saveDB(db);
-    res.json({ success: true });
-  } else {
-    res.status(404).json({ error: 'Not found' });
-  }
+  deleteAthlete(req.params.id)
+    .then(() => res.json({ success: true }))
+    .catch(() => res.status(500).json({ error: 'Failed to delete' }));
 });
 
 // ── Start ─────────────────────────────────────────────────────
 app.listen(PORT, async () => {
   console.log(`\n🚴  Cycling Leaderboard running on http://localhost:${PORT}\n`);
+  await initDB();
   await checkMissedSnapshot();
 });
