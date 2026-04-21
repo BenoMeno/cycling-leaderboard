@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cycling Challenge — History</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface2: #1c1c1c;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --accent: #e8ff47;
+      --accent2: #47c8ff;
+      --text: #f0f0f0;
+      --muted: #555;
+      --muted2: #888;
+      --gold: #f5c542;
+      --silver: #b0b8c1;
+      --bronze: #c87941;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .wrapper {
+      position: relative; z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 52px 0 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .logo h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 10vw, 84px);
+      letter-spacing: 2px; line-height: 0.88;
+      color: var(--accent);
+    }
+    .logo p {
+      font-size: 12px; color: var(--muted2);
+      letter-spacing: 3px; text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .nav-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--muted2); font-size: 13px; text-decoration: none;
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 16px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .nav-link:hover { color: var(--text); border-color: var(--border2); }
+
+    /* ── States ── */
+    .state-loading, .state-empty {
+      padding: 80px 20px; text-align: center;
+      color: var(--muted2); font-size: 14px;
+    }
+    .spinner {
+      width: 26px; height: 26px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Month cards ── */
+    .month-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .month-card:hover { border-color: var(--border2); }
+
+    .month-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 24px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .month-header-left {
+      display: flex; align-items: center; gap: 16px;
+    }
+
+    .month-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px; letter-spacing: 1px;
+      color: var(--text);
+    }
+
+    .month-stats {
+      display: flex; gap: 16px;
+    }
+
+    .month-stat {
+      font-size: 12px; color: var(--muted2);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .month-stat strong { color: var(--text); font-weight: 500; font-size: 13px; }
+
+    .month-winners {
+      display: flex; gap: 8px; align-items: center;
+    }
+
+    .winner-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px 4px 6px;
+      font-size: 12px;
+    }
+
+    .winner-avatar {
+      width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 500;
+    }
+
+    .chevron {
+      color: var(--muted); font-size: 18px;
+      transition: transform 0.25s;
+      flex-shrink: 0;
+    }
+    .month-card.open .chevron { transform: rotate(180deg); }
+
+    /* ── Expanded content ── */
+    .month-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+    .month-card.open .month-body {
+      max-height: 2000px;
+    }
+
+    .month-body-inner {
+      padding: 0 24px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Sub-tabs ── */
+    .sub-tabs {
+      display: flex; gap: 0;
+      margin: 16px 0 14px;
+    }
+    .sub-tab {
+      padding: 8px 18px;
+      font-size: 12px; font-weight: 500;
+      color: var(--muted2);
+      cursor: pointer; border: none; background: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      font-family: 'DM Sans', sans-serif;
+      transition: color 0.15s, border-color 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .sub-tab:hover { color: var(--text); }
+    .sub-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+    .sub-tab.elev.active { border-bottom-color: var(--accent2); }
+    .sub-tab-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    /* ── Mini leaderboard ── */
+    .mini-lb { }
+
+    .mini-row {
+      display: grid;
+      grid-template-columns: 36px 1fr 70px 80px;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .mini-row:last-child { border-bottom: none; }
+
+    .mini-rank { font-size: 12px; color: var(--muted); text-align: center; }
+    .mini-rank.gold   { color: var(--gold);   font-size: 16px; }
+    .mini-rank.silver { color: var(--silver); font-size: 16px; }
+    .mini-rank.bronze { color: var(--bronze); font-size: 16px; }
+
+    .mini-user { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .mini-avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 500; flex-shrink: 0;
+    }
+    .mini-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mini-rides { font-size: 11px; color: var(--muted2); text-align: right; }
+    .mini-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 17px; text-align: right;
+    }
+    .mini-val small { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--muted2); }
+    .mini-val.dist { color: var(--accent); }
+    .mini-val.elev { color: var(--accent2); }
+
+    /* ── Animations ── */
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+    .stagger > * { opacity: 0; animation: fadeIn 0.3s ease forwards; }
+    .stagger > *:nth-child(1) { animation-delay: 0.04s; }
+    .stagger > *:nth-child(2) { animation-delay: 0.08s; }
+    .stagger > *:nth-child(3) { animation-delay: 0.12s; }
+    .stagger > *:nth-child(n+4) { animation-delay: 0.16s; }
+
+    @media (max-width: 560px) {
+      .month-stats { display: none; }
+      .mini-row { grid-template-columns: 28px 1fr 70px; }
+      .mini-row > *:nth-child(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="logo">
+      <h1>Velodrome</h1>
+      <p>Monthly Results Archive</p>
+    </div>
+    <a href="/" class="nav-link">← Current Month</a>
+  </header>
+
+  <div id="content">
+    <div class="state-loading">
+      <div class="spinner"></div>
+      Loading history…
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function initials(name) {
+    return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  }
+
+  function avatarColor(name) {
+    const palette = ['#1a3a6a','#4a1a6a','#6a1a3a','#1a5a3a','#5a3a1a','#1a4a5a','#3a1a5a'];
+    let h = 0;
+    for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+    return palette[h % palette.length];
+  }
+
+  function formatMonth(key) {
+    const [year, month] = key.split('-');
+    return new Date(year, month - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+  }
+
+  function medalSymbol(i) {
+    if (i === 0) return '<span class="mini-rank gold">🥇</span>';
+    if (i === 1) return '<span class="mini-rank silver">🥈</span>';
+    if (i === 2) return '<span class="mini-rank bronze">🥉</span>';
+    return `<span class="mini-rank">${i+1}</span>`;
+  }
+
+  function renderMiniBoard(riders, type) {
+    const sorted = [...riders].sort((a,b) => type === 'dist' ? b.km - a.km : b.elevation - a.elevation);
+    return sorted.map((r, i) => {
+      const bg  = avatarColor(r.name);
+      const val = type === 'dist'
+        ? `<div class="mini-val dist">${r.km.toFixed(1)}<small> km</small></div>`
+        : `<div class="mini-val elev">${r.elevation.toLocaleString()}<small> m</small></div>`;
+      return `
+        <div class="mini-row">
+          ${medalSymbol(i)}
+          <div class="mini-user">
+            <div class="mini-avatar" style="background:${bg}33;border:1px solid ${bg}55;color:${bg === '#1a3a6a' ? '#6a9adf' : bg}">${initials(r.name)}</div>
+            <span class="mini-name">${r.name}</span>
+          </div>
+          <div class="mini-rides">${r.rides} ride${r.rides!==1?'s':''}</div>
+          ${val}
+        </div>`;
+    }).join('');
+  }
+
+  function buildCard(entry, index) {
+    const monthLabel = formatMonth(entry.month);
+    const byDist     = [...entry.riders].sort((a,b) => b.km - a.km);
+    const byElev     = [...entry.riders].sort((a,b) => b.elevation - a.elevation);
+
+    const totalKm    = entry.riders.reduce((s,r) => s + r.km, 0).toFixed(0);
+    const totalElev  = entry.riders.reduce((s,r) => s + r.elevation, 0).toLocaleString();
+    const totalRides = entry.riders.reduce((s,r) => s + r.rides, 0);
+
+    // Winner chips
+    const distWinner = byDist[0];
+    const elevWinner = byElev[0];
+    const chipColor  = c => avatarColor(c.name);
+
+    const chips = `
+      <div class="month-winners">
+        <div class="winner-chip">
+          <div class="winner-avatar" style="background:${chipColor(distWinner)}33;color:${chipColor(distWinner) === '#1a3a6a' ? '#6a9adf' : chipColor(distWinner)}">${initials(distWinner.name)}</div>
+          <span style="color:var(--accent);font-size:11px">⬥</span>
+          <span>${distWinner.name}</span>
+        </div>
+        ${elevWinner.name !== distWinner.name ? `
+        <div class="winner-chip">
+          <div class="winner-avatar" style="background:${chipColor(elevWinner)}33;color:${chipColor(elevWinner) === '#1a3a6a' ? '#6a9adf' : chipColor(elevWinner)}">${initials(elevWinner.name)}</div>
+          <span style="color:var(--accent2);font-size:11px">▲</span>
+          <span>${elevWinner.name}</span>
+        </div>` : ''}
+      </div>`;
+
+    const cardId   = `card-${index}`;
+    const distId   = `dist-${index}`;
+    const elevId   = `elev-${index}`;
+    const tabDistId = `tab-dist-${index}`;
+    const tabElevId = `tab-elev-${index}`;
+
+    return `
+      <div class="month-card fade-in" id="${cardId}" style="animation-delay:${index * 0.06}s">
+        <div class="month-header" onclick="toggleCard('${cardId}')">
+          <div class="month-header-left">
+            <div class="month-name">${monthLabel}</div>
+            <div class="month-stats">
+              <div class="month-stat"><strong>${totalKm}</strong> km total</div>
+              <div class="month-stat"><strong>${totalElev}</strong> m climbed</div>
+              <div class="month-stat"><strong>${totalRides}</strong> rides</div>
+              <div class="month-stat"><strong>${entry.riders.length}</strong> riders</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            ${chips}
+            <span class="chevron">⌄</span>
+          </div>
+        </div>
+
+        <div class="month-body">
+          <div class="month-body-inner">
+            <div class="sub-tabs">
+              <button class="sub-tab active" id="${tabDistId}" onclick="switchSubTab('${index}', 'dist')">
+                <span class="sub-tab-dot" style="background:var(--accent)"></span> Distance
+              </button>
+              <button class="sub-tab elev" id="${tabElevId}" onclick="switchSubTab('${index}', 'elev')">
+                <span class="sub-tab-dot" style="background:var(--accent2)"></span> Elevation
+              </button>
+            </div>
+            <div class="mini-lb stagger" id="${distId}">${renderMiniBoard(entry.riders, 'dist')}</div>
+            <div class="mini-lb stagger" id="${elevId}" style="display:none">${renderMiniBoard(entry.riders, 'elev')}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function toggleCard(cardId) {
+    document.getElementById(cardId).classList.toggle('open');
+  }
+
+  function switchSubTab(index, type) {
+    const distEl = document.getElementById(`dist-${index}`);
+    const elevEl = document.getElementById(`elev-${index}`);
+    const tabDist = document.getElementById(`tab-dist-${index}`);
+    const tabElev = document.getElementById(`tab-elev-${index}`);
+
+    distEl.style.display = type === 'dist' ? 'block' : 'none';
+    elevEl.style.display = type === 'elev' ? 'block' : 'none';
+    tabDist.classList.toggle('active', type === 'dist');
+    tabElev.classList.toggle('active', type === 'elev');
+  }
+
+  async function loadHistory() {
+    const content = document.getElementById('content');
+    try {
+      const res  = await fetch('/api/history');
+      const data = await res.json();
+
+      if (!data.length) {
+        content.innerHTML = `
+          <div class="state-empty">
+            No history yet — results are saved automatically at the end of each month.<br><br>
+            <a href="/" style="color:var(--accent);text-decoration:none">← View current leaderboard</a>
+          </div>`;
+        return;
+      }
+
+      content.innerHTML = data.map((entry, i) => buildCard(entry, i)).join('');
+    } catch {
+      content.innerHTML = '<div class="state-empty">Could not load history. Is the server running?</div>';
+    }
+  }
+
+  loadHistory();
+</script>
+</body>
+</html>
