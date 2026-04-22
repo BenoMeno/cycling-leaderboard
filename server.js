@@ -147,7 +147,8 @@ async function getMonthlyStats(athlete, year, month) {
     }
   );
 
-  const typesFound = [...new Set(data.map(a => a.type || a.sport_type || 'unknown'))];
+  if (data.length > 0) console.log(`[${athlete.name}] First activity raw:`, JSON.stringify(data[0]).slice(0, 400));
+  const typesFound = [...new Set(data.map(a => a.type || a.sport_type || "unknown"))];
   console.log(`[${athlete.name}] ${data.length} activities. Types: ${typesFound.join(', ') || 'none'}`);
 
   const rideTypes = ['ride', 'virtual', 'ebike', 'gravel', 'mountain', 'cycling', 'bike', 'velomobile'];
