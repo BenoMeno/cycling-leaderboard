@@ -143,18 +143,18 @@ async function getMonthlyStats(athlete, year, month) {
     `https://intervals.icu/api/v1/athlete/${athlete.athleteId}/activities`,
     {
       auth:   { username: 'API_KEY', password: athlete.apiKey },
-      params: { oldest, newest, fields: 'name,type,distance,total_elevation_gain' },
+      params: { oldest, newest },
     }
   );
 
-  const typesFound = [...new Set(data.map(a => a.type))];
+  const typesFound = [...new Set(data.map(a => a.type || a.sport_type || 'unknown'))];
   console.log(`[${athlete.name}] ${data.length} activities. Types: ${typesFound.join(', ') || 'none'}`);
 
   const rideTypes = ['ride', 'virtual', 'ebike', 'gravel', 'mountain', 'cycling', 'bike', 'velomobile'];
   let totalKm = 0, totalElevation = 0, totalRides = 0;
 
   for (const act of data) {
-    const type = (act.type || '').toLowerCase();
+    const type = ((act.type || act.sport_type || '')).toLowerCase();
     if (rideTypes.some(t => type.includes(t))) {
       totalKm        += (act.distance || 0) / 1000;
       totalElevation += (act.total_elevation_gain || 0);
