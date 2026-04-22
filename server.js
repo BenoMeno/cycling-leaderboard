@@ -6,6 +6,7 @@ require('dotenv').config();
 const express    = require('express');
 const axios      = require('axios');
 const path       = require('path');
+const crypto     = require('crypto');
 const { createClient } = require('@libsql/client');
 
 const app = express();
@@ -16,17 +17,18 @@ const { PORT = 3000, TURSO_URL, TURSO_TOKEN } = process.env;
 
 // ── Turso database client ─────────────────────────────────────
 const db = createClient({
-  url:       TURSO_URL   || 'file:local.db',  // falls back to local SQLite for dev
+  url:       TURSO_URL   || 'file:local.db',
   authToken: TURSO_TOKEN || undefined,
 });
 
-// ── Create tables if they don't exist ────────────────────────
+// ── Create tables ─────────────────────────────────────────────
 async function initDB() {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS athletes (
-      athlete_id TEXT PRIMARY KEY,
-      name       TEXT NOT NULL,
-      api_key    TEXT NOT NULL
+      athlete_id  TEXT PRIMARY KEY,
+      name        TEXT NOT NULL,
+      api_key     TEXT NOT NULL,
+      remove_code TEXT NOT NULL
     )
   `);
   await db.execute(`
@@ -36,6 +38,19 @@ async function initDB() {
       riders   TEXT NOT NULL
     )
   `);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS chat (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      month      TEXT NOT NULL,
+      author     TEXT NOT NULL,
+      message    TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `);
+  // Add remove_code column to existing deployments that predate it
+  try {
+    await db.execute('ALTER TABLE athletes ADD COLUMN remove_code TEXT NOT NULL DEFAULT ""');
+  } catch { /* column already exists */ }
   console.log('[db] Tables ready.');
 }
 
@@ -45,11 +60,19 @@ async function loadAthletes() {
   return result.rows.map(r => ({ athleteId: r.athlete_id, name: r.name, apiKey: r.api_key }));
 }
 
-async function saveAthlete(athleteId, name, apiKey) {
+async function saveAthlete(athleteId, name, apiKey, removeCode) {
   await db.execute({
-    sql: 'INSERT OR REPLACE INTO athletes (athlete_id, name, api_key) VALUES (?, ?, ?)',
-    args: [athleteId, name, apiKey],
+    sql:  'INSERT OR REPLACE INTO athletes (athlete_id, name, api_key, remove_code) VALUES (?, ?, ?, ?)',
+    args: [athleteId, name, apiKey, removeCode],
   });
+}
+
+async function getAthleteByRemoveCode(code) {
+  const result = await db.execute({
+    sql:  'SELECT athlete_id, name FROM athletes WHERE remove_code = ?',
+    args: [code],
+  });
+  return result.rows[0] || null;
 }
 
 async function deleteAthlete(athleteId) {
@@ -78,7 +101,29 @@ async function historyEntryExists(month) {
   return result.rows.length > 0;
 }
 
-// ── Fetch athlete profile from intervals.icu ──────────────────
+// ── Chat helpers ──────────────────────────────────────────────
+async function getChatMessages(month) {
+  const result = await db.execute({
+    sql:  'SELECT id, author, message, created_at FROM chat WHERE month = ? ORDER BY created_at ASC',
+    args: [month],
+  });
+  return result.rows.map(r => ({
+    id:        r.id,
+    author:    r.author,
+    message:   r.message,
+    createdAt: r.created_at,
+  }));
+}
+
+async function addChatMessage(month, author, message) {
+  const result = await db.execute({
+    sql:  'INSERT INTO chat (month, author, message, created_at) VALUES (?, ?, ?, ?)',
+    args: [month, author, message.slice(0, 500), new Date().toISOString()],
+  });
+  return result.lastInsertRowid;
+}
+
+// ── intervals.icu helpers ────────────────────────────────────
 async function getAthleteProfile(athleteId, apiKey) {
   const { data } = await axios.get(
     `https://intervals.icu/api/v1/athlete/${athleteId}`,
@@ -87,7 +132,6 @@ async function getAthleteProfile(athleteId, apiKey) {
   return data;
 }
 
-// ── Get cycling stats for a specific month ────────────────────
 async function getMonthlyStats(athlete, year, month) {
   const pad     = n => String(n).padStart(2, '0');
   const lastDay = new Date(year, month, 0).getDate();
@@ -98,7 +142,7 @@ async function getMonthlyStats(athlete, year, month) {
   const { data } = await axios.get(
     `https://intervals.icu/api/v1/athlete/${athlete.athleteId}/activities`,
     {
-      auth: { username: 'API_KEY', password: athlete.apiKey },
+      auth:   { username: 'API_KEY', password: athlete.apiKey },
       params: { oldest, newest, fields: 'name,type,distance,total_elevation_gain' },
     }
   );
@@ -107,8 +151,8 @@ async function getMonthlyStats(athlete, year, month) {
   console.log(`[${athlete.name}] ${data.length} activities. Types: ${typesFound.join(', ') || 'none'}`);
 
   const rideTypes = ['ride', 'virtual', 'ebike', 'gravel', 'mountain', 'cycling', 'bike', 'velomobile'];
-
   let totalKm = 0, totalElevation = 0, totalRides = 0;
+
   for (const act of data) {
     const type = (act.type || '').toLowerCase();
     if (rideTypes.some(t => type.includes(t))) {
@@ -126,7 +170,6 @@ async function getMonthlyStats(athlete, year, month) {
   };
 }
 
-// ── Fetch leaderboard for a given month ───────────────────────
 async function fetchLeaderboard(year, month) {
   const athletes = await loadAthletes();
   if (athletes.length === 0) return [];
@@ -142,46 +185,32 @@ async function fetchLeaderboard(year, month) {
       }
     })
   );
-
   return results.filter(r => r.status === 'fulfilled').map(r => r.value);
 }
 
-// ── Snapshot: save final standings for a completed month ──────
+// ── Snapshot helpers ──────────────────────────────────────────
 async function snapshotMonth(year, month) {
   const key = `${year}-${String(month).padStart(2, '0')}`;
-
   if (await historyEntryExists(key)) {
-    console.log(`[snapshot] ${key} already exists, skipping.`);
-    return;
+    console.log(`[snapshot] ${key} already exists.`); return;
   }
-
   console.log(`[snapshot] Saving standings for ${key}…`);
   const riders = await fetchLeaderboard(year, month);
-
-  if (riders.length === 0) {
-    console.log(`[snapshot] No riders for ${key}, skipping.`);
-    return;
-  }
-
+  if (riders.length === 0) { console.log(`[snapshot] No riders, skipping.`); return; }
   await saveHistoryEntry(key, new Date().toISOString(), riders);
   console.log(`[snapshot] Saved ${riders.length} riders for ${key}.`);
 }
 
-// ── Check on startup if last month needs snapshotting ─────────
 async function checkMissedSnapshot() {
-  const now       = new Date();
-  const lastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-  const year      = lastMonth.getFullYear();
-  const month     = lastMonth.getMonth() + 1;
-  const key       = `${year}-${String(month).padStart(2, '0')}`;
-
+  const now  = new Date();
+  const prev = new Date(now.getFullYear(), now.getMonth(), 0);
+  const key  = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
   if (!(await historyEntryExists(key))) {
-    console.log(`[snapshot] Missing snapshot for ${key}, creating now…`);
-    await snapshotMonth(year, month);
+    console.log(`[snapshot] Missing ${key}, creating now…`);
+    await snapshotMonth(prev.getFullYear(), prev.getMonth() + 1);
   }
 }
 
-// ── Schedule end-of-month snapshot (checks every hour) ───────
 let lastCheckedMonth = new Date().getMonth();
 setInterval(async () => {
   const now = new Date();
@@ -194,17 +223,18 @@ setInterval(async () => {
 
 // ── Routes ────────────────────────────────────────────────────
 
-// Register a new athlete
+// Join
 app.post('/api/join', async (req, res) => {
   const { athleteId, apiKey } = req.body;
   if (!athleteId || !apiKey)
     return res.status(400).json({ error: 'athleteId and apiKey are required' });
-
   try {
     const profile     = await getAthleteProfile(athleteId, apiKey);
     const displayName = profile.name || `Athlete ${athleteId}`;
-    await saveAthlete(athleteId, displayName, apiKey);
-    res.json({ success: true, name: displayName });
+    const removeCode  = crypto.randomBytes(5).toString('hex'); // e.g. "a3f9c2b1d4"
+    await saveAthlete(athleteId, displayName, apiKey, removeCode);
+    // Return the removal code to the frontend — user must save it
+    res.json({ success: true, name: displayName, removeCode });
   } catch (err) {
     if (err.response?.status === 401 || err.response?.status === 403)
       return res.status(401).json({ error: 'Invalid Athlete ID or API key — check your credentials.' });
@@ -213,36 +243,56 @@ app.post('/api/join', async (req, res) => {
   }
 });
 
-// Current month leaderboard
+// Leave (remove yourself using your removal code)
+app.post('/api/leave', async (req, res) => {
+  const { removeCode } = req.body;
+  if (!removeCode)
+    return res.status(400).json({ error: 'removeCode required' });
+  const athlete = await getAthleteByRemoveCode(removeCode);
+  if (!athlete)
+    return res.status(404).json({ error: 'Invalid removal code. Check you copied it correctly.' });
+  await deleteAthlete(athlete.athlete_id);
+  res.json({ success: true, name: athlete.name });
+});
+
+// Current leaderboard
 app.get('/api/leaderboard', async (req, res) => {
   const now    = new Date();
   const riders = await fetchLeaderboard(now.getFullYear(), now.getMonth() + 1);
   res.json({ riders });
 });
 
-// Full history
+// History
 app.get('/api/history', async (req, res) => {
   res.json(await loadHistory());
 });
 
-// Manually trigger a snapshot (admin use)
+// Manual snapshot
 app.post('/api/snapshot', async (req, res) => {
   const { year, month } = req.body;
-  if (!year || !month)
-    return res.status(400).json({ error: 'year and month required' });
-  try {
-    await snapshotMonth(year, month);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  if (!year || !month) return res.status(400).json({ error: 'year and month required' });
+  try { await snapshotMonth(year, month); res.json({ success: true }); }
+  catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Remove an athlete
-app.delete('/api/athlete/:id', (req, res) => {
-  deleteAthlete(req.params.id)
-    .then(() => res.json({ success: true }))
-    .catch(() => res.status(500).json({ error: 'Failed to delete' }));
+// Chat — get messages for current month
+app.get('/api/chat', async (req, res) => {
+  const now   = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  res.json(await getChatMessages(month));
+});
+
+// Chat — post a message
+app.post('/api/chat', async (req, res) => {
+  const { author, message } = req.body;
+  if (!author?.trim() || !message?.trim())
+    return res.status(400).json({ error: 'author and message required' });
+  if (message.length > 500)
+    return res.status(400).json({ error: 'Message too long (max 500 chars)' });
+  const now   = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const id    = await addChatMessage(month, author.trim().slice(0, 50), message.trim());
+  res.json({ success: true, id });
 });
 
 // ── Start ─────────────────────────────────────────────────────
