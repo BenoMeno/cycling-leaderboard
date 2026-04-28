@@ -9,48 +9,49 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0a0a0a; --surface: #141414; --surface2: #1c1c1c;
+      --bg: #0a0a0a; --surface: #141414; --surface2: #1c1c1c; --surface3: #222;
       --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
       --accent: #e8ff47; --accent2: #47c8ff;
       --text: #f0f0f0; --muted: #555; --muted2: #888;
       --gold: #f5c542; --silver: #b0b8c1; --bronze: #c87941;
-      --danger: #ff5f5f;
+      --danger: #ff5f5f; --success: #4caf7d;
     }
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
     body::before {
       content: ''; position: fixed; inset: 0;
-      background-image: linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+      background-image: linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
       background-size: 40px 40px; pointer-events: none; z-index: 0;
     }
 
     /* ── Layout ── */
-    .page { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 340px; gap: 28px; max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
+    .page { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 320px; gap: 24px; max-width: 1160px; margin: 0 auto; padding: 0 24px 80px; }
     .main-col { min-width: 0; }
     .chat-col { position: sticky; top: 24px; align-self: start; }
 
     /* ── Header ── */
-    header { padding: 52px 0 36px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--border); margin-bottom: 36px; }
+    header { padding: 48px 0 32px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
     .logo h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(48px,8vw,80px); letter-spacing: 2px; line-height: 0.88; color: var(--accent); }
     .logo p { font-size: 12px; color: var(--muted2); letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; }
-    .month-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; text-align: right; flex-shrink: 0; }
+    .month-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; text-align: right; flex-shrink: 0; }
     .month-badge .name { font-size: 14px; font-weight: 500; }
     .month-badge .days { font-size: 12px; color: var(--muted2); margin-top: 3px; }
 
-    /* ── Action bar ── */
-    .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; gap: 10px; flex-wrap: wrap; }
-    .action-bar-left { display: flex; gap: 8px; }
-    .action-bar-right { display: flex; gap: 8px; }
-
-    .btn-primary { display: inline-flex; align-items: center; gap: 7px; background: var(--accent); color: #0a0a0a; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; text-decoration: none; transition: opacity 0.15s, transform 0.1s; }
+    /* ── Buttons ── */
+    .btn-primary { display: inline-flex; align-items: center; gap: 7px; background: var(--accent); color: #0a0a0a; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 9px 16px; border-radius: 8px; border: none; cursor: pointer; text-decoration: none; transition: opacity 0.15s, transform 0.1s; white-space: nowrap; }
     .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
-    .btn-ghost { display: inline-flex; align-items: center; gap: 7px; background: none; border: 1px solid var(--border); color: var(--muted2); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 9px 16px; border-radius: 8px; cursor: pointer; text-decoration: none; transition: color 0.15s, border-color 0.15s; }
+    .btn-ghost { display: inline-flex; align-items: center; gap: 7px; background: none; border: 1px solid var(--border); color: var(--muted2); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 14px; border-radius: 8px; cursor: pointer; text-decoration: none; transition: color 0.15s, border-color 0.15s; white-space: nowrap; }
     .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
     .btn-danger { border-color: rgba(255,95,95,0.3); color: var(--danger); }
-    .btn-danger:hover { border-color: rgba(255,95,95,0.6); color: var(--danger); }
+    .btn-danger:hover { border-color: rgba(255,95,95,0.6); }
+    .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+
+    /* ── Action bar ── */
+    .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 8px; flex-wrap: wrap; }
+    .action-bar-right { display: flex; gap: 8px; }
 
     /* ── Tabs ── */
-    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
-    .tab { padding: 11px 22px; font-size: 13px; font-weight: 500; color: var(--muted2); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; display: flex; align-items: center; gap: 7px; font-family: 'DM Sans', sans-serif; }
+    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .tab { padding: 10px 20px; font-size: 13px; font-weight: 500; color: var(--muted2); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; display: flex; align-items: center; gap: 7px; font-family: 'DM Sans', sans-serif; }
     .tab:hover { color: var(--text); }
     .tab.active { color: var(--text); border-bottom-color: var(--accent); }
     .tab.elevation.active { border-bottom-color: var(--accent2); }
@@ -59,12 +60,12 @@
     .tab:last-child .tab-dot { background: var(--accent2); }
 
     /* ── Podium ── */
-    .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-    .podium-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 14px; text-align: center; position: relative; overflow: hidden; }
+    .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .podium-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 12px; text-align: center; position: relative; overflow: hidden; }
     .podium-card.first { border-color: rgba(245,197,66,0.25); background: linear-gradient(160deg,#191500 0%,#141414 60%); }
-    .podium-card.first::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--gold); }
+    .podium-card.first::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; background:var(--gold); }
     .podium-card.elev-first { border-color: rgba(71,200,255,0.25); background: linear-gradient(160deg,#001319 0%,#141414 60%); }
-    .podium-card.elev-first::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent2); }
+    .podium-card.elev-first::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; background:var(--accent2); }
     .podium-rank { font-size: 10px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
     .podium-card.first .podium-rank { color: var(--gold); }
     .podium-card.second .podium-rank { color: var(--silver); }
@@ -77,15 +78,15 @@
     .podium-value { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; }
     .podium-value.dist { color: var(--accent); }
     .podium-value.elev { color: var(--accent2); }
-    .podium-value span { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted2); font-weight: 300; }
+    .podium-value span { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted2); }
 
-    /* ── Leaderboard table ── */
+    /* ── Leaderboard ── */
     .section-label { font-size: 11px; color: var(--muted2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; }
     .leaderboard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-    .lb-header { display: grid; grid-template-columns: 40px 1fr 70px 80px; gap: 8px; padding: 9px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+    .lb-header { display: grid; grid-template-columns: 40px 1fr 65px 80px; gap: 8px; padding: 9px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); }
     .lb-header span { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
     .lb-header span:nth-child(3), .lb-header span:nth-child(4) { text-align: right; }
-    .lb-row { display: grid; grid-template-columns: 40px 1fr 70px 80px; align-items: center; gap: 8px; padding: 12px 18px; border-bottom: 1px solid var(--border); transition: background 0.12s; }
+    .lb-row { display: grid; grid-template-columns: 40px 1fr 65px 80px; align-items: center; gap: 8px; padding: 11px 16px; border-bottom: 1px solid var(--border); transition: background 0.12s; cursor: pointer; }
     .lb-row:last-child { border-bottom: none; }
     .lb-row:hover { background: var(--surface2); }
     .lb-rank { font-size: 13px; color: var(--muted); text-align: center; }
@@ -93,8 +94,9 @@
     .lb-user { display: flex; align-items: center; gap: 9px; min-width: 0; }
     .avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; flex-shrink: 0; border: 1px solid transparent; }
     .lb-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-name-hint { font-size: 10px; color: var(--muted2); margin-left: 4px; }
     .lb-rides { font-size: 11px; color: var(--muted2); text-align: right; }
-    .lb-value { font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 0.5px; text-align: right; }
+    .lb-value { font-family: 'Bebas Neue', sans-serif; font-size: 17px; text-align: right; }
     .lb-value small { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--muted2); }
     .lb-value.dist { color: var(--accent); }
     .lb-value.elev { color: var(--accent2); }
@@ -102,196 +104,193 @@
     /* ── States ── */
     .state-loading, .state-empty { padding: 50px 20px; text-align: center; color: var(--muted2); font-size: 14px; }
     .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
+    .spinner.sm { width: 16px; height: 16px; margin: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Footer row ── */
-    .footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+    .footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
     .last-updated { font-size: 12px; color: var(--muted); }
 
-    /* ── Chat panel ── */
-    .chat-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; height: 520px; }
-    .chat-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    /* ── Chat ── */
+    .chat-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; height: 500px; }
+    .chat-header { padding: 13px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .chat-title { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
     .chat-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
     .chat-month { font-size: 11px; color: var(--muted2); }
-
-    .chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
-    .chat-messages::-webkit-scrollbar { width: 4px; }
-    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+    .chat-messages::-webkit-scrollbar { width: 3px; }
     .chat-messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
     .chat-msg { display: flex; gap: 8px; align-items: flex-start; }
-    .chat-avatar { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; flex-shrink: 0; margin-top: 1px; }
+    .chat-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 500; flex-shrink: 0; margin-top: 1px; }
     .chat-bubble { flex: 1; min-width: 0; }
-    .chat-meta { display: flex; align-items: baseline; gap: 6px; margin-bottom: 3px; }
+    .chat-meta { display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px; }
     .chat-author { font-size: 12px; font-weight: 500; }
     .chat-time { font-size: 10px; color: var(--muted2); }
-    .chat-text { font-size: 13px; line-height: 1.5; color: var(--text); word-break: break-word; }
-
-    .chat-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--muted2); text-align: center; padding: 20px; }
-
-    .chat-form { padding: 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
-    .chat-name-row { margin-bottom: 8px; }
-    .chat-input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 11px; outline: none; transition: border-color 0.15s; }
+    .chat-text { font-size: 13px; line-height: 1.5; word-break: break-word; }
+    .chat-empty { flex:1; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--muted2); text-align:center; padding:20px; }
+    .chat-form { padding: 10px; border-top: 1px solid var(--border); flex-shrink: 0; }
+    .chat-name-row { margin-bottom: 7px; }
+    .chat-input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 7px 10px; outline: none; transition: border-color 0.15s; }
     .chat-input:focus { border-color: rgba(232,255,71,0.35); }
     .chat-input::placeholder { color: var(--muted); }
-    .chat-msg-row { display: flex; gap: 7px; }
+    .chat-msg-row { display: flex; gap: 6px; }
     .chat-msg-row .chat-input { flex: 1; }
-    .btn-send { background: var(--accent); border: none; color: #0a0a0a; font-size: 16px; width: 36px; height: 36px; border-radius: 7px; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; }
+    .btn-send { background: var(--accent); border: none; color: #0a0a0a; width: 34px; height: 34px; border-radius: 7px; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; }
     .btn-send:hover { opacity: 0.85; }
     .btn-send:disabled { opacity: 0.4; cursor: default; }
 
     /* ── Modals ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 24px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 28px; width: 100%; max-width: 440px; transform: translateY(10px); transition: transform 0.2s; }
+    .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 26px; width: 100%; max-width: 440px; transform: translateY(10px); transition: transform 0.2s; max-height: 90vh; overflow-y: auto; }
     .modal-overlay.open .modal { transform: translateY(0); }
-    .modal h2 { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; }
-    .modal p { font-size: 13px; color: var(--muted2); margin-bottom: 20px; line-height: 1.6; }
+    .modal-wide { max-width: 560px; }
+    .modal h2 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 1px; color: var(--accent); margin-bottom: 4px; }
+    .modal p { font-size: 13px; color: var(--muted2); margin-bottom: 18px; line-height: 1.6; }
     .modal label { display: block; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); margin-bottom: 5px; }
-    .modal input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 13px; margin-bottom: 14px; outline: none; transition: border-color 0.15s; }
+    .modal input[type=text], .modal input[type=password] { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 9px 12px; margin-bottom: 12px; outline: none; transition: border-color 0.15s; }
     .modal input:focus { border-color: rgba(232,255,71,0.4); }
-    .modal-hint { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; font-size: 12px; color: var(--muted2); line-height: 1.7; margin-bottom: 18px; }
-    .modal-hint strong { color: var(--text); font-weight: 500; }
+    .modal-hint { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--muted2); line-height: 1.7; margin-bottom: 16px; }
+    .modal-hint strong { color: var(--text); }
     .modal-hint a { color: var(--accent); text-decoration: none; }
-    .modal-hint a:hover { text-decoration: underline; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
-    .modal-error { font-size: 13px; color: var(--danger); margin-bottom: 12px; display: none; }
+    .modal-error { font-size: 13px; color: var(--danger); margin-bottom: 10px; display: none; }
+    .modal-success { font-size: 13px; color: var(--success); margin-bottom: 10px; display: none; }
 
-    /* Remove code box */
-    .remove-code-box { background: var(--surface2); border: 1px solid rgba(232,255,71,0.25); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    /* ── Remove code box ── */
+    .remove-code-box { background: var(--surface2); border: 1px solid rgba(232,255,71,0.2); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
     .remove-code-box p { font-size: 12px; color: var(--muted2); margin-bottom: 8px; }
-    .remove-code-value { font-family: monospace; font-size: 18px; letter-spacing: 3px; color: var(--accent); text-align: center; padding: 8px; background: rgba(232,255,71,0.07); border-radius: 6px; cursor: pointer; user-select: all; }
+    .remove-code-value { font-family: monospace; font-size: 20px; letter-spacing: 4px; color: var(--accent); text-align: center; padding: 8px; background: rgba(232,255,71,0.07); border-radius: 6px; cursor: pointer; user-select: all; }
     .remove-code-warn { font-size: 11px; color: var(--muted2); margin-top: 8px; text-align: center; }
 
-    /* Toast */
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-size: 13px; padding: 10px 20px; border-radius: 8px; transition: transform 0.25s ease; z-index: 100; white-space: nowrap; }
+    /* ── Profile modal ── */
+    .profile-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    .profile-avatar { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 500; flex-shrink: 0; border: 2px solid transparent; }
+    .profile-name { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 1px; line-height: 1; }
+    .profile-stats { display: flex; gap: 16px; margin-bottom: 20px; }
+    .profile-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; flex: 1; text-align: center; }
+    .profile-stat .val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; }
+    .profile-stat .val.dist { color: var(--accent); }
+    .profile-stat .val.elev { color: var(--accent2); }
+    .profile-stat .lbl { font-size: 10px; color: var(--muted2); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+
+    /* ── Activity list ── */
+    .activity-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .activity-section-title { font-size: 11px; color: var(--muted2); letter-spacing: 2px; text-transform: uppercase; }
+    .activity-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .activity-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+    .activity-source { font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
+    .activity-source.intervals { background: rgba(71,200,255,0.12); color: var(--accent2); border: 1px solid rgba(71,200,255,0.2); }
+    .activity-source.fit { background: rgba(232,255,71,0.1); color: var(--accent); border: 1px solid rgba(232,255,71,0.2); }
+    .activity-info { flex: 1; min-width: 0; }
+    .activity-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .activity-meta { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+    .activity-km { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: var(--accent); flex-shrink: 0; }
+    .activity-delete { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; border-radius: 4px; transition: color 0.15s; font-size: 14px; flex-shrink: 0; }
+    .activity-delete:hover { color: var(--danger); }
+
+    /* ── Upload zone ── */
+    .upload-zone { border: 2px dashed var(--border2); border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; position: relative; margin-bottom: 12px; }
+    .upload-zone:hover, .upload-zone.dragover { border-color: rgba(232,255,71,0.4); background: rgba(232,255,71,0.04); }
+    .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-zone-icon { font-size: 24px; margin-bottom: 6px; }
+    .upload-zone-text { font-size: 13px; color: var(--muted2); }
+    .upload-zone-text strong { color: var(--text); }
+    .upload-code-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
+    .upload-code-row > div { flex: 1; }
+    .upload-code-row label { margin-bottom: 5px; }
+
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-size: 13px; padding: 10px 20px; border-radius: 8px; transition: transform 0.25s ease; z-index: 200; white-space: nowrap; }
     .toast.show { transform: translateX(-50%) translateY(0); }
 
-    /* Animations */
-    .fade-in { animation: fadeIn 0.35s ease forwards; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    /* ── Animations ── */
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)} }
 
-    /* Responsive */
-    @media (max-width: 860px) {
-      .page { grid-template-columns: 1fr; }
-      .chat-col { position: static; }
-      .chat-panel { height: 400px; }
-    }
-    @media (max-width: 520px) {
-      .podium { grid-template-columns: 1fr; }
-      .lb-row, .lb-header { grid-template-columns: 34px 1fr 70px; }
-      .lb-row > *:nth-child(3), .lb-header > *:nth-child(3) { display: none; }
-    }
+    /* ── Responsive ── */
+    @media(max-width:860px){ .page{grid-template-columns:1fr} .chat-col{position:static} .chat-panel{height:380px} }
+    @media(max-width:520px){ .podium{grid-template-columns:1fr} .lb-row,.lb-header{grid-template-columns:34px 1fr 72px} .lb-row>*:nth-child(3),.lb-header>*:nth-child(3){display:none} }
   </style>
 </head>
 <body>
 <div class="page">
   <div class="main-col">
-
     <header>
-      <div class="logo">
-        <h1>Velodrome</h1>
-        <p>Monthly Cycling Challenge</p>
-      </div>
-      <div class="month-badge">
-        <div class="name" id="monthName">—</div>
-        <div class="days" id="daysLeft">—</div>
-      </div>
+      <div class="logo"><h1>Velodrome</h1><p>Monthly Cycling Challenge</p></div>
+      <div class="month-badge"><div class="name" id="monthName">—</div><div class="days" id="daysLeft">—</div></div>
     </header>
 
     <div class="action-bar">
-      <div class="action-bar-left">
-        <a href="/history.html" class="btn-ghost">Archive ↗</a>
-      </div>
+      <div style="display:flex;gap:8px"><a href="/history.html" class="btn-ghost">Archive ↗</a><a href="/admin.html" class="btn-ghost" style="font-size:12px;color:var(--muted)">⚙ Admin</a></div>
       <div class="action-bar-right">
         <button class="btn-ghost btn-danger" onclick="openLeaveModal()">Leave</button>
         <button class="btn-ghost" onclick="loadLeaderboard(true)">↻ Refresh</button>
         <button class="btn-primary" onclick="openJoinModal()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
           Join
         </button>
       </div>
     </div>
 
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('distance')" id="tab-distance">
-        <span class="tab-dot"></span> Distance
-      </button>
-      <button class="tab elevation" onclick="switchTab('elevation')" id="tab-elevation">
-        <span class="tab-dot"></span> Elevation
-      </button>
+      <button class="tab active" onclick="switchTab('distance')" id="tab-distance"><span class="tab-dot"></span>Distance</button>
+      <button class="tab elevation" onclick="switchTab('elevation')" id="tab-elevation"><span class="tab-dot"></span>Elevation</button>
     </div>
 
     <div id="board-distance">
       <div id="podium-distance" class="podium" style="display:none"></div>
       <p class="section-label" id="label-distance" style="display:none">All Riders — Distance</p>
-      <div class="leaderboard" id="lb-distance">
-        <div class="state-loading"><div class="spinner"></div>Loading…</div>
-      </div>
+      <div class="leaderboard" id="lb-distance"><div class="state-loading"><div class="spinner"></div>Loading…</div></div>
     </div>
-
     <div id="board-elevation" style="display:none">
       <div id="podium-elevation" class="podium" style="display:none"></div>
       <p class="section-label" id="label-elevation" style="display:none">All Riders — Elevation</p>
-      <div class="leaderboard" id="lb-elevation">
-        <div class="state-loading"><div class="spinner"></div>Loading…</div>
-      </div>
+      <div class="leaderboard" id="lb-elevation"><div class="state-loading"><div class="spinner"></div>Loading…</div></div>
     </div>
 
-    <div class="footer-row">
-      <span class="last-updated" id="lastUpdated"></span>
-    </div>
+    <div class="footer-row"><span class="last-updated" id="lastUpdated"></span></div>
+  </div>
 
-  </div><!-- /main-col -->
-
-  <!-- ── Chat panel ── -->
+  <!-- Chat -->
   <div class="chat-col">
     <div class="chat-panel">
       <div class="chat-header">
-        <div class="chat-title">
-          <div class="chat-dot"></div>
-          Group Chat
-        </div>
+        <div class="chat-title"><div class="chat-dot"></div>Group Chat</div>
         <div class="chat-month" id="chatMonth"></div>
       </div>
-      <div class="chat-messages" id="chatMessages">
-        <div class="chat-empty">Loading messages…</div>
-      </div>
+      <div class="chat-messages" id="chatMessages"><div class="chat-empty">Loading…</div></div>
       <div class="chat-form">
-        <div class="chat-name-row">
-          <input class="chat-input" id="chatName" placeholder="Your name" maxlength="50" />
-        </div>
+        <div class="chat-name-row"><input class="chat-input" id="chatName" placeholder="Your name" maxlength="50"/></div>
         <div class="chat-msg-row">
-          <input class="chat-input" id="chatInput" placeholder="Say something…" maxlength="500" />
+          <input class="chat-input" id="chatInput" placeholder="Say something…" maxlength="500"/>
           <button class="btn-send" id="sendBtn" onclick="sendMessage()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-</div><!-- /page -->
-
-<!-- ── Join Modal ── -->
+<!-- Join Modal -->
 <div class="modal-overlay" id="joinModal" onclick="handleOverlayClick(event,'joinModal')">
   <div class="modal">
     <h2>Join Challenge</h2>
-    <p>Connect your intervals.icu account. Your data is only used to calculate monthly cycling totals.</p>
+    <p>Connect your intervals.icu account, or join without it to upload FIT files manually.</p>
     <div class="modal-hint">
-      <strong>How to find your details:</strong><br>
+      <strong>intervals.icu Athlete ID & API Key:</strong><br>
       1. Log in at <a href="https://intervals.icu" target="_blank">intervals.icu</a><br>
       2. Go to <strong>Settings → Developer Settings</strong><br>
-      3. Copy your <strong>Athlete ID</strong> (starts with "i")<br>
-      4. Click <strong>Generate API Key</strong> and copy it
+      3. Copy your <strong>Athlete ID</strong> (starts with "i") and generate an API Key
     </div>
     <div class="modal-error" id="joinError"></div>
-    <label>Athlete ID</label>
-    <input type="text" id="inputAthleteId" placeholder="e.g. i12345" autocomplete="off" />
-    <label>API Key</label>
-    <input type="password" id="inputApiKey" placeholder="Your intervals.icu API key" autocomplete="off" />
+    <label>Athlete ID <span style="color:var(--muted2);font-size:10px;text-transform:none;letter-spacing:0">(required)</span></label>
+    <input type="text" id="inputAthleteId" placeholder="e.g. i12345 — make up any ID if not using intervals.icu" autocomplete="off"/>
+    <label>Display Name <span style="color:var(--muted2);font-size:10px;text-transform:none;letter-spacing:0">(only needed without API key)</span></label>
+    <input type="text" id="inputName" placeholder="Your name (auto-filled from intervals.icu)" autocomplete="off"/>
+    <label>API Key <span style="color:var(--muted2);font-size:10px;text-transform:none;letter-spacing:0">(optional — leave blank for FIT-only)</span></label>
+    <input type="password" id="inputApiKey" placeholder="Leave blank to join without intervals.icu" autocomplete="off"/>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('joinModal')">Cancel</button>
       <button class="btn-primary" id="joinSubmitBtn" onclick="submitJoin()">Join →</button>
@@ -299,30 +298,32 @@
   </div>
 </div>
 
-<!-- ── Remove code display (shown after join) ── -->
+<!-- Remove code display -->
 <div class="modal-overlay" id="codeModal" onclick="handleOverlayClick(event,'codeModal')">
   <div class="modal">
     <h2>Save your code</h2>
-    <p>You're on the leaderboard! Save this removal code somewhere safe — you'll need it if you ever want to remove yourself.</p>
+    <p>You're on the leaderboard! Save this code — you'll need it to upload FIT files and to remove yourself.</p>
     <div class="remove-code-box">
       <p>Your removal code (tap to copy)</p>
       <div class="remove-code-value" id="displayRemoveCode" onclick="copyCode()">——————</div>
-      <div class="remove-code-warn">⚠️ This is only shown once. Write it down or screenshot it.</div>
+      <div class="remove-code-warn">⚠️ Only shown once. Use the buttons below to save it.</div>
     </div>
-    <div class="modal-actions">
-      <button class="btn-primary" onclick="closeModal('codeModal')">I've saved it →</button>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn-ghost" style="flex:1;justify-content:center" onclick="copyCode()">📋 Copy</button>
+      <button class="btn-ghost" style="flex:1;justify-content:center" onclick="downloadCode()">💾 Download</button>
     </div>
+    <div class="modal-actions"><button class="btn-primary" onclick="closeModal('codeModal')">I've saved it →</button></div>
   </div>
 </div>
 
-<!-- ── Leave Modal ── -->
+<!-- Leave Modal -->
 <div class="modal-overlay" id="leaveModal" onclick="handleOverlayClick(event,'leaveModal')">
   <div class="modal">
     <h2>Leave Challenge</h2>
-    <p>Enter your removal code to remove yourself from the leaderboard. This cannot be undone.</p>
+    <p>Enter your removal code to remove yourself from the leaderboard.</p>
     <div class="modal-error" id="leaveError"></div>
     <label>Removal Code</label>
-    <input type="text" id="inputRemoveCode" placeholder="e.g. a3f9c2b1d4" autocomplete="off" />
+    <input type="text" id="inputRemoveCode" placeholder="e.g. a3f9c2b1d4" autocomplete="off"/>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('leaveModal')">Cancel</button>
       <button class="btn-primary" style="background:var(--danger)" id="leaveSubmitBtn" onclick="submitLeave()">Remove me</button>
@@ -330,29 +331,71 @@
   </div>
 </div>
 
+<!-- Profile / Activities Modal -->
+<div class="modal-overlay" id="profileModal" onclick="handleOverlayClick(event,'profileModal')">
+  <div class="modal modal-wide">
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatar"></div>
+      <div>
+        <div class="profile-name" id="profileName">—</div>
+        <div style="font-size:12px;color:var(--muted2)" id="profileSub">Click an activity to manage it</div>
+      </div>
+    </div>
+
+    <div class="profile-stats" id="profileStats"></div>
+
+    <div id="profileActivities">
+      <div class="state-loading"><div class="spinner"></div>Loading activities…</div>
+    </div>
+
+    <!-- Upload section -->
+    <div id="uploadSection" style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+      <div class="activity-section-header">
+        <div class="activity-section-title">Upload FIT File</div>
+      </div>
+      <div class="upload-code-row">
+        <div>
+          <label>Your removal code (required to upload)</label>
+          <input type="text" id="uploadRemoveCode" placeholder="Enter your code to verify it's you" style="margin-bottom:0"/>
+        </div>
+      </div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fitFileInput" accept=".fit" onchange="handleFileSelect(event)"/>
+        <div class="upload-zone-icon">📁</div>
+        <div class="upload-zone-text"><strong>Drop a .FIT file here</strong> or click to browse</div>
+      </div>
+      <div class="modal-error" id="uploadError"></div>
+      <div class="modal-success" id="uploadSuccess"></div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:8px">
+      <button class="btn-ghost" onclick="closeModal('profileModal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-  // ── Helpers ──────────────────────────────────────────────────
   const $ = id => document.getElementById(id);
-  let lastMsgId = 0;
+  let allRiders = [];
+  let currentAthlete = null;
+  let currentJoinName = '';
+  let currentAthlete = null;
 
-  function initials(name) { return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
-  function avatarColor(name) {
-    const p=['#1a3a6a','#4a1a6a','#6a1a3a','#1a5a3a','#5a3a1a','#1a4a5a','#3a1a5a'];
-    let h=0; for(const c of name) h=(h*31+c.charCodeAt(0))&0xffff; return p[h%p.length];
-  }
+  // ── Helpers ──────────────────────────────────────────────────
+  function initials(name){return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+  function avatarColor(name){const p=['#1a3a6a','#4a1a6a','#6a1a3a','#1a5a3a','#5a3a1a','#1a4a5a','#3a1a5a'];let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))&0xffff;return p[h%p.length];}
   function showToast(msg,dur=3000){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+  function formatDuration(s){if(!s)return'';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h?`${h}h ${m}m`:`${m}m`;}
+  function formatDate(d){return new Date(d).toLocaleDateString([],{month:'short',day:'numeric'});}
+  function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
   function setMonthInfo(){
     const now=new Date(),last=new Date(now.getFullYear(),now.getMonth()+1,0),left=last.getDate()-now.getDate();
     $('monthName').textContent=now.toLocaleString('default',{month:'long',year:'numeric'});
     $('daysLeft').textContent=left===0?'Last day!':`${left} days left`;
-    const key=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     $('chatMonth').textContent=now.toLocaleString('default',{month:'short',year:'numeric'});
-  }
-  function formatTime(iso){
-    const d=new Date(iso);
-    return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   }
 
   // ── Tabs ─────────────────────────────────────────────────────
@@ -365,11 +408,11 @@
 
   // ── Leaderboard ───────────────────────────────────────────────
   function renderBoards(riders){
-    if(!riders||riders.length===0){
+    allRiders=riders;
+    if(!riders||!riders.length){
       const e='<div class="state-empty">No rides logged yet — be the first! 🚴</div>';
-      $('lb-distance').innerHTML=e; $('lb-elevation').innerHTML=e;
-      ['podium-distance','podium-elevation'].forEach(id=>{$(id).style.display='none';});
-      ['label-distance','label-elevation'].forEach(id=>{$(id).style.display='none';});
+      $('lb-distance').innerHTML=e;$('lb-elevation').innerHTML=e;
+      ['podium-distance','podium-elevation','label-distance','label-elevation'].forEach(id=>$(id).style.display='none');
       return;
     }
     const byDist=[...riders].sort((a,b)=>b.km-a.km);
@@ -383,8 +426,7 @@
   function renderPodium(podiumId,labelId,sorted,type){
     const el=$(podiumId);
     if(!sorted.length){el.style.display='none';return;}
-    const top3=sorted.slice(0,3);
-    const isE=type==='elev';
+    const top3=sorted.slice(0,3),isE=type==='elev';
     const medals=['1st 🥇','2nd 🥈','3rd 🥉'];
     const cls=isE?['elev-first','elev-second','elev-third']:['first','second','third'];
     const order=top3.length>=2?[top3[1],top3[0],top3[2]].filter(Boolean):top3;
@@ -392,17 +434,15 @@
     const ro=top3.length>=2?[medals[1],medals[0],medals[2]].slice(0,order.length):[medals[0]];
     el.innerHTML=order.map((r,i)=>{
       const bg=avatarColor(r.name);
-      const val=type==='dist'
-        ?`<div class="podium-value dist">${r.km.toFixed(1)}<span> km</span></div>`
-        :`<div class="podium-value elev">${r.elevation.toLocaleString()}<span> m</span></div>`;
-      return`<div class="podium-card ${co[i]} fade-in" style="animation-delay:${i*0.07}s">
+      const val=type==='dist'?`<div class="podium-value dist">${r.km.toFixed(1)}<span> km</span></div>`:`<div class="podium-value elev">${r.elevation.toLocaleString()}<span> m</span></div>`;
+      return`<div class="podium-card ${co[i]} fade-in" style="animation-delay:${i*0.06}s">
         <div class="podium-rank">${ro[i]}</div>
         <div class="podium-avatar" style="background:${bg}33;border-color:${bg}88">${initials(r.name)}</div>
         <div class="podium-name">${r.name}</div>${val}
         <div style="font-size:10px;color:var(--muted2);margin-top:3px">${r.rides} ride${r.rides!==1?'s':''}</div>
       </div>`;
     }).join('');
-    el.style.display='grid'; $(labelId).style.display='block';
+    el.style.display='grid';$(labelId).style.display='block';
   }
 
   function renderTable(tableId,sorted,type){
@@ -411,11 +451,11 @@
     const rows=sorted.map((r,i)=>{
       const bg=avatarColor(r.name);
       const rank=i===0?`<div class="lb-rank top">1</div>`:`<div class="lb-rank">${i+1}</div>`;
-      const val=isE
-        ?`<div class="lb-value elev">${r.elevation.toLocaleString()}<small> m</small></div>`
-        :`<div class="lb-value dist">${r.km.toFixed(1)}<small> km</small></div>`;
-      return`<div class="lb-row">${rank}
-        <div class="lb-user"><div class="avatar" style="background:${bg}33;border-color:${bg}55;color:${bg}">${initials(r.name)}</div><span class="lb-name">${r.name}</span></div>
+      const val=isE?`<div class="lb-value elev">${r.elevation.toLocaleString()}<small> m</small></div>`:`<div class="lb-value dist">${r.km.toFixed(1)}<small> km</small></div>`;
+      return`<div class="lb-row" onclick="openProfileModal('${r.athleteId}','${escapeHtml(r.name)}')">
+        ${rank}
+        <div class="lb-user"><div class="avatar" style="background:${bg}33;border-color:${bg}55;color:${bg}">${initials(r.name)}</div>
+        <span class="lb-name">${r.name}</span><span class="lb-name-hint">↗</span></div>
         <div class="lb-rides">${r.rides} ride${r.rides!==1?'s':''}</div>${val}</div>`;
     }).join('');
     $(tableId).innerHTML=`<div class="fade-in">${hdr}${rows}</div>`;
@@ -428,7 +468,7 @@
     }
     try{
       const res=await fetch('/api/leaderboard');
-      if(!res.ok) throw new Error();
+      if(!res.ok)throw new Error();
       const data=await res.json();
       renderBoards(data.riders);
       $('lastUpdated').textContent='Updated '+new Date().toLocaleTimeString();
@@ -438,134 +478,261 @@
     }
   }
 
+  // ── Profile Modal ─────────────────────────────────────────────
+  async function openProfileModal(athleteId, name){
+    currentAthlete={id:athleteId,name};
+    const bg=avatarColor(name);
+    $('profileAvatar').textContent=initials(name);
+    $('profileAvatar').style.cssText=`background:${bg}33;border-color:${bg}88;border:2px solid ${bg}88;color:${bg};width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:500;`;
+    $('profileName').textContent=name;
+    $('profileActivities').innerHTML='<div class="state-loading"><div class="spinner"></div>Loading activities…</div>';
+    $('profileStats').innerHTML='';
+    $('uploadError').style.display='none';
+    $('uploadSuccess').style.display='none';
+    $('profileModal').classList.add('open');
+
+    try{
+      const res=await fetch(`/api/athlete/${athleteId}/activities`);
+      const data=await res.json();
+      renderProfileActivities(data.activities||[]);
+    }catch{
+      $('profileActivities').innerHTML='<div class="state-empty">Could not load activities.</div>';
+    }
+  }
+
+  function renderProfileActivities(activities){
+    // Stats summary
+    const totalKm=activities.reduce((s,a)=>s+a.distanceKm,0);
+    const totalElev=activities.reduce((s,a)=>s+a.elevationM,0);
+    const fromICU=activities.filter(a=>a.source==='intervals').length;
+    const fromFIT=activities.filter(a=>a.source==='fit').length;
+    $('profileStats').innerHTML=`
+      <div class="profile-stat"><div class="val dist">${totalKm.toFixed(1)}</div><div class="lbl">km total</div></div>
+      <div class="profile-stat"><div class="val elev">${totalElev.toLocaleString()}</div><div class="lbl">m elevation</div></div>
+      <div class="profile-stat"><div class="val">${activities.length}</div><div class="lbl">rides</div></div>`;
+
+    if(!activities.length){
+      $('profileActivities').innerHTML='<div style="font-size:13px;color:var(--muted2);padding:12px 0">No rides this month yet.</div>';
+      return;
+    }
+
+    const rows=activities.map(a=>{
+      const srcCls=a.source==='intervals'?'intervals':'fit';
+      const srcLabel=a.source==='intervals'?'intervals.icu':'FIT upload';
+      const deleteBtn=a.source==='fit'?`<button class="activity-delete" onclick="deleteActivity(${a.id},event)" title="Delete">✕</button>`:'';
+      return`<div class="activity-item" id="act-${a.source}-${a.id}">
+        <span class="activity-source ${srcCls}">${srcLabel}</span>
+        <div class="activity-info">
+          <div class="activity-name">${escapeHtml(a.name||a.filename||'Ride')}</div>
+          <div class="activity-meta">${formatDate(a.activityDate)}${a.durationS?` · ${formatDuration(a.durationS)}`:''} · ${a.elevationM}m ↑</div>
+        </div>
+        <div class="activity-km">${a.distanceKm.toFixed(1)}<span style="font-family:'DM Sans',sans-serif;font-size:10px;color:var(--muted2)"> km</span></div>
+        ${deleteBtn}
+      </div>`;
+    }).join('');
+
+    $('profileActivities').innerHTML=`
+      <div class="activity-section-header">
+        <div class="activity-section-title">This month's rides</div>
+        <div style="font-size:11px;color:var(--muted2)">${fromICU} from intervals · ${fromFIT} from FIT</div>
+      </div>
+      <div class="activity-list">${rows}</div>`;
+  }
+
+  async function deleteActivity(activityId, e){
+    e.stopPropagation();
+    const code=$('uploadRemoveCode').value.trim();
+    if(!code){
+      $('uploadError').textContent='Enter your removal code above to delete activities.';
+      $('uploadError').style.display='block';
+      $('uploadRemoveCode').focus();
+      return;
+    }
+    if(!confirm('Delete this activity?')) return;
+    try{
+      const res=await fetch(`/api/activity/${activityId}`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({removeCode:code})});
+      const data=await res.json();
+      if(!res.ok){$('uploadError').textContent=data.error;$('uploadError').style.display='block';return;}
+      // Remove from DOM
+      const el=$(`act-fit-${activityId}`);
+      if(el)el.remove();
+      showToast('Activity deleted.');
+      loadLeaderboard();
+    }catch{showToast('Failed to delete activity.');}
+  }
+
+  // ── FIT Upload ────────────────────────────────────────────────
+  function handleFileSelect(e){
+    const file=e.target.files[0];
+    if(file) uploadFitFile(file);
+  }
+
+  const uploadZone=$('uploadZone');
+  uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover');});
+  uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop',e=>{
+    e.preventDefault();uploadZone.classList.remove('dragover');
+    const file=e.dataTransfer.files[0];
+    if(file&&file.name.endsWith('.fit')) uploadFitFile(file);
+    else showToast('Please drop a .fit file');
+  });
+
+  async function uploadFitFile(file){
+    const code=$('uploadRemoveCode').value.trim();
+    $('uploadError').style.display='none';
+    $('uploadSuccess').style.display='none';
+    if(!code){
+      $('uploadError').textContent='Enter your removal code first.';
+      $('uploadError').style.display='block';
+      $('uploadRemoveCode').focus();
+      return;
+    }
+    if(!currentAthlete){return;}
+
+    const zone=$('uploadZone');
+    zone.innerHTML='<div class="spinner sm" style="margin:0 auto"></div><div style="font-size:12px;color:var(--muted2);margin-top:8px">Parsing FIT file…</div>';
+
+    const formData=new FormData();
+    formData.append('fit',file);
+    formData.append('removeCode',code);
+
+    try{
+      const res=await fetch(`/api/athlete/${currentAthlete.id}/upload`,{method:'POST',body:formData});
+      const data=await res.json();
+      if(!res.ok){
+        $('uploadError').textContent=data.error||'Upload failed.';
+        $('uploadError').style.display='block';
+      } else {
+        $('uploadSuccess').textContent=`✓ Uploaded: ${data.activity.distanceKm.toFixed(1)} km, ${data.activity.elevationM} m elevation`;
+        $('uploadSuccess').style.display='block';
+        // Refresh activities list
+        const res2=await fetch(`/api/athlete/${currentAthlete.id}/activities`);
+        const d2=await res2.json();
+        renderProfileActivities(d2.activities||[]);
+        loadLeaderboard();
+      }
+    }catch{
+      $('uploadError').textContent='Upload failed — check your connection.';
+      $('uploadError').style.display='block';
+    }
+
+    // Reset upload zone
+    zone.innerHTML=`<input type="file" id="fitFileInput" accept=".fit" onchange="handleFileSelect(event)"/>
+      <div class="upload-zone-icon">📁</div>
+      <div class="upload-zone-text"><strong>Drop a .FIT file here</strong> or click to browse</div>`;
+  }
+
   // ── Chat ──────────────────────────────────────────────────────
   function renderMessages(msgs){
     const el=$('chatMessages');
-    if(!msgs.length){
-      el.innerHTML='<div class="chat-empty">No messages yet.<br>Start the conversation! 💬</div>';
-      return;
-    }
+    if(!msgs.length){el.innerHTML='<div class="chat-empty">No messages yet 💬</div>';return;}
     const wasAtBottom=el.scrollHeight-el.scrollTop-el.clientHeight<60;
     el.innerHTML=msgs.map(m=>{
       const bg=avatarColor(m.author);
       return`<div class="chat-msg">
         <div class="chat-avatar" style="background:${bg}33;color:${bg};border:1px solid ${bg}55">${initials(m.author)}</div>
         <div class="chat-bubble">
-          <div class="chat-meta">
-            <span class="chat-author" style="color:${bg}">${m.author}</span>
-            <span class="chat-time">${formatTime(m.createdAt)}</span>
-          </div>
+          <div class="chat-meta"><span class="chat-author" style="color:${bg}">${m.author}</span><span class="chat-time">${new Date(m.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div>
           <div class="chat-text">${escapeHtml(m.message)}</div>
         </div>
       </div>`;
     }).join('');
-    if(wasAtBottom||lastMsgId===0) el.scrollTop=el.scrollHeight;
-    if(msgs.length) lastMsgId=msgs[msgs.length-1].id;
+    if(wasAtBottom) el.scrollTop=el.scrollHeight;
   }
 
-  function escapeHtml(s){
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  async function loadChat(){
-    try{
-      const res=await fetch('/api/chat');
-      const msgs=await res.json();
-      renderMessages(msgs);
-    }catch{ /* silent */ }
-  }
-
+  async function loadChat(){try{const r=await fetch('/api/chat');renderMessages(await r.json());}catch{}}
   async function sendMessage(){
-    const name=$('chatName').value.trim();
-    const msg=$('chatInput').value.trim();
-    if(!name){showToast('Enter your name first'); $('chatName').focus(); return;}
-    if(!msg) return;
-    const btn=$('sendBtn');
-    btn.disabled=true;
+    const name=$('chatName').value.trim(),msg=$('chatInput').value.trim();
+    if(!name){showToast('Enter your name first');$('chatName').focus();return;}
+    if(!msg)return;
+    $('sendBtn').disabled=true;
     try{
       await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({author:name,message:msg})});
       $('chatInput').value='';
       localStorage.setItem('chatName',name);
       await loadChat();
-    }catch{showToast('Could not send message');}
-    finally{btn.disabled=false;}
+      $('chatMessages').scrollTop=$('chatMessages').scrollHeight;
+    }catch{showToast('Could not send');}
+    finally{$('sendBtn').disabled=false;}
   }
 
   // ── Modals ────────────────────────────────────────────────────
-  function openJoinModal(){ $('joinModal').classList.add('open'); $('inputAthleteId').focus(); }
-  function openLeaveModal(){ $('leaveModal').classList.add('open'); $('inputRemoveCode').focus(); }
+  function openJoinModal(){$('joinModal').classList.add('open');$('inputAthleteId').focus();}
+  function openLeaveModal(){$('leaveModal').classList.add('open');$('inputRemoveCode').focus();}
   function closeModal(id){
     $(id).classList.remove('open');
-    if(id==='joinModal'){ $('joinError').style.display='none'; $('inputAthleteId').value=''; $('inputApiKey').value=''; }
-    if(id==='leaveModal'){ $('leaveError').style.display='none'; $('inputRemoveCode').value=''; }
+    if(id==='joinModal'){$('joinError').style.display='none';$('inputAthleteId').value='';$('inputApiKey').value='';$('inputName').value='';}
+    if(id==='leaveModal'){$('leaveError').style.display='none';$('inputRemoveCode').value='';}
+    if(id==='profileModal'){currentAthlete=null;}
   }
-  function handleOverlayClick(e,id){ if(e.target===e.currentTarget) closeModal(id); }
-
-  function copyCode(){
+  function handleOverlayClick(e,id){if(e.target===e.currentTarget)closeModal(id);}
+  function copyCode(){navigator.clipboard.writeText($('displayRemoveCode').textContent).then(()=>showToast('Code copied!'));}
+  function downloadCode(){
     const code=$('displayRemoveCode').textContent;
-    navigator.clipboard.writeText(code).then(()=>showToast('Code copied!'));
+    const name=currentJoinName||'athlete';
+    const content=`Velodrome Cycling Challenge - Removal Code\n\nName: ${name}\nCode: ${code}\n\nKeep this safe! You need it to:\n- Upload FIT files\n- Remove yourself from the leaderboard\n- Delete your activities\n`;
+    const a=document.createElement('a');
+    a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(content);
+    a.download=`velodrome-code-${name.replace(/ /g,'_')}.txt`;
+    a.click();
+    showToast('Code downloaded!');
   }
 
   async function submitJoin(){
     const athleteId=$('inputAthleteId').value.trim();
     const apiKey=$('inputApiKey').value.trim();
-    const errEl=$('joinError'), btn=$('joinSubmitBtn');
+    const name=$('inputName').value.trim();
+    const errEl=$('joinError'),btn=$('joinSubmitBtn');
     errEl.style.display='none';
-    if(!athleteId||!apiKey){errEl.textContent='Please fill in both fields.';errEl.style.display='block';return;}
-    btn.textContent='Connecting…'; btn.disabled=true;
+    if(!athleteId){errEl.textContent='Athlete ID is required.';errEl.style.display='block';return;}
+    if(!apiKey&&!name){errEl.textContent='Enter a display name when joining without an API key.';errEl.style.display='block';return;}
+    btn.textContent='Connecting…';btn.disabled=true;
     try{
-      const res=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({athleteId,apiKey})});
+      const res=await fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({athleteId,apiKey,name})});
       const data=await res.json();
       if(!res.ok){errEl.textContent=data.error||'Something went wrong.';errEl.style.display='block';return;}
       closeModal('joinModal');
+      currentJoinName=data.name;
       $('displayRemoveCode').textContent=data.removeCode;
       $('codeModal').classList.add('open');
-      setTimeout(()=>loadLeaderboard(),1000);
+      setTimeout(loadLeaderboard,1000);
     }catch{errEl.textContent='Network error.';errEl.style.display='block';}
     finally{btn.textContent='Join →';btn.disabled=false;}
   }
 
   async function submitLeave(){
     const code=$('inputRemoveCode').value.trim();
-    const errEl=$('leaveError'), btn=$('leaveSubmitBtn');
+    const errEl=$('leaveError'),btn=$('leaveSubmitBtn');
     errEl.style.display='none';
     if(!code){errEl.textContent='Please enter your removal code.';errEl.style.display='block';return;}
-    btn.textContent='Removing…'; btn.disabled=true;
+    btn.textContent='Removing…';btn.disabled=true;
     try{
       const res=await fetch('/api/leave',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({removeCode:code})});
       const data=await res.json();
       if(!res.ok){errEl.textContent=data.error||'Invalid code.';errEl.style.display='block';return;}
-      closeModal('leaveModal');
-      showToast(`👋 ${data.name} has left the challenge.`);
-      loadLeaderboard();
+      closeModal('leaveModal');showToast(`👋 ${data.name} has left the challenge.`);loadLeaderboard();
     }catch{errEl.textContent='Network error.';errEl.style.display='block';}
     finally{btn.textContent='Remove me';btn.disabled=false;}
   }
 
-  // Enter key support
-  document.addEventListener('keydown', e=>{
+  // Enter/Escape keys
+  document.addEventListener('keydown',e=>{
     if(e.key==='Enter'){
-      if($('joinModal').classList.contains('open')) submitJoin();
-      if($('leaveModal').classList.contains('open')) submitLeave();
-      if(document.activeElement===$('chatInput')) sendMessage();
+      if($('joinModal').classList.contains('open'))submitJoin();
+      if($('leaveModal').classList.contains('open'))submitLeave();
+      if(document.activeElement===$('chatInput'))sendMessage();
     }
-    if(e.key==='Escape'){
-      ['joinModal','leaveModal','codeModal'].forEach(closeModal);
-    }
+    if(e.key==='Escape')['joinModal','leaveModal','codeModal','profileModal'].forEach(closeModal);
   });
 
   // ── Init ──────────────────────────────────────────────────────
   setMonthInfo();
-
-  // Restore chat name from localStorage
-  const savedName = localStorage.getItem('chatName');
-  if(savedName) $('chatName').value = savedName;
-
+  const savedName=localStorage.getItem('chatName');
+  if(savedName)$('chatName').value=savedName;
   loadLeaderboard();
   loadChat();
-  // Refresh leaderboard every 5 min, chat every 15 sec
-  setInterval(loadLeaderboard, 5*60*1000);
-  setInterval(loadChat, 15*1000);
+  setInterval(loadLeaderboard,5*60*1000);
+  setInterval(loadChat,15*1000);
 </script>
 </body>
 </html>

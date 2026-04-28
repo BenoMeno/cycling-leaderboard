@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Velodrome Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0a; --surface: #141414; --surface2: #1c1c1c;
+      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+      --accent: #e8ff47; --text: #f0f0f0; --muted: #555; --muted2: #888;
+      --danger: #ff5f5f; --success: #4caf7d;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+      background-size: 40px 40px; pointer-events: none; z-index: 0;
+    }
+    .wrapper { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 0 24px 80px; }
+
+    header { padding: 48px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 36px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .logo h1 { font-family: 'Bebas Neue', sans-serif; font-size: 64px; letter-spacing: 2px; line-height: 0.88; color: var(--accent); }
+    .logo p { font-size: 12px; color: var(--muted2); letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; }
+    .nav-link { font-size: 13px; color: var(--muted2); text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 9px 16px; transition: color 0.15s, border-color 0.15s; }
+    .nav-link:hover { color: var(--text); border-color: var(--border2); }
+
+    /* ── Login ── */
+    #loginSection { max-width: 360px; margin: 80px auto 0; text-align: center; }
+    #loginSection h2 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--accent); margin-bottom: 8px; }
+    #loginSection p { font-size: 13px; color: var(--muted2); margin-bottom: 24px; }
+    .input-row { display: flex; gap: 8px; }
+    .input-row input { flex: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 13px; outline: none; transition: border-color 0.15s; }
+    .input-row input:focus { border-color: rgba(232,255,71,0.4); }
+    .btn-primary { background: var(--accent); color: #0a0a0a; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+    .btn-primary:hover { opacity: 0.85; }
+    .login-error { font-size: 13px; color: var(--danger); margin-top: 10px; display: none; }
+
+    /* ── Admin content ── */
+    #adminSection { display: none; }
+    .section-label { font-size: 11px; color: var(--muted2); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 14px; }
+
+    /* ── Athletes table ── */
+    .athlete-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+    .athlete-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .athlete-row:last-child { border-bottom: none; }
+    .athlete-info { min-width: 0; }
+    .athlete-name { font-size: 14px; font-weight: 500; }
+    .athlete-id { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+
+    .code-box { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px; padding: 6px 10px; }
+    .code-value { font-family: monospace; font-size: 14px; letter-spacing: 2px; color: var(--accent); cursor: pointer; user-select: all; }
+    .code-value:hover { opacity: 0.8; }
+    .copy-hint { font-size: 10px; color: var(--muted2); }
+
+    .btn-delete { background: none; border: 1px solid rgba(255,95,95,0.25); color: var(--danger); font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 12px; border-radius: 7px; cursor: pointer; transition: background 0.15s, border-color 0.15s; white-space: nowrap; }
+    .btn-delete:hover { background: rgba(255,95,95,0.08); border-color: rgba(255,95,95,0.5); }
+
+    /* ── Empty / loading ── */
+    .state-loading, .state-empty { padding: 48px; text-align: center; color: var(--muted2); font-size: 14px; }
+    .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface2); border: 1px solid var(--border2); color: var(--text); font-size: 13px; padding: 10px 20px; border-radius: 8px; transition: transform 0.25s ease; z-index: 100; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)} }
+
+    @media(max-width:520px) {
+      .athlete-row { grid-template-columns: 1fr; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <div class="logo">
+      <h1>Velodrome</h1>
+      <p>Admin Panel</p>
+    </div>
+    <a href="/" class="nav-link">← Back to leaderboard</a>
+  </header>
+
+  <!-- Login -->
+  <div id="loginSection">
+    <h2>Admin Login</h2>
+    <p>Enter the admin password to manage athletes and view removal codes.</p>
+    <div class="input-row">
+      <input type="password" id="passwordInput" placeholder="Admin password" autocomplete="current-password"/>
+      <button class="btn-primary" onclick="login()">Login →</button>
+    </div>
+    <div class="login-error" id="loginError"></div>
+  </div>
+
+  <!-- Admin content -->
+  <div id="adminSection">
+    <p class="section-label">Athletes & Removal Codes</p>
+    <div class="athlete-card" id="athleteList">
+      <div class="state-loading"><div class="spinner"></div>Loading…</div>
+    </div>
+
+    <div style="font-size:12px;color:var(--muted2);line-height:1.7">
+      <strong style="color:var(--text)">Notes:</strong><br>
+      • Clicking a code copies it to clipboard<br>
+      • Deleting an athlete removes them and all their uploaded FIT activities<br>
+      • intervals.icu activity data is not stored here — it's fetched live each time
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let adminPassword = '';
+
+  function showToast(msg, dur=2500) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), dur);
+  }
+
+  async function login() {
+    const pwd = document.getElementById('passwordInput').value.trim();
+    const err = document.getElementById('loginError');
+    err.style.display = 'none';
+    if (!pwd) { err.textContent = 'Enter the admin password.'; err.style.display = 'block'; return; }
+
+    // Test the password by calling the API
+    const res = await fetch('/api/admin/athletes', { headers: { 'x-admin-password': pwd } });
+    if (res.status === 401 || res.status === 403) {
+      const data = await res.json();
+      err.textContent = data.error || 'Wrong password.';
+      err.style.display = 'block';
+      return;
+    }
+
+    adminPassword = pwd;
+    sessionStorage.setItem('adminPwd', pwd);
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('adminSection').style.display = 'block';
+    const data = await res.json();
+    renderAthletes(data);
+  }
+
+  function renderAthletes(athletes) {
+    const el = document.getElementById('athleteList');
+    if (!athletes.length) {
+      el.innerHTML = '<div class="state-empty">No athletes yet.</div>';
+      return;
+    }
+    el.innerHTML = athletes.map((a, i) => `
+      <div class="athlete-row fade-in" id="row-${a.athleteId}" style="animation-delay:${i*0.05}s">
+        <div class="athlete-info">
+          <div class="athlete-name">${a.name}</div>
+          <div class="athlete-id">ID: ${a.athleteId}</div>
+        </div>
+        <div class="code-box" title="Click code to copy">
+          <div>
+            <div class="copy-hint">Removal code</div>
+            <div class="code-value" onclick="copyCode('${a.removeCode}', this)">${a.removeCode}</div>
+          </div>
+        </div>
+        <button class="btn-delete" onclick="deleteAthlete('${a.athleteId}', '${a.name}')">Remove</button>
+      </div>`).join('');
+  }
+
+  function copyCode(code, el) {
+    navigator.clipboard.writeText(code).then(() => {
+      const orig = el.textContent;
+      el.textContent = 'copied!';
+      setTimeout(() => el.textContent = orig, 1500);
+    });
+  }
+
+  async function deleteAthlete(athleteId, name) {
+    if (!confirm(`Remove ${name} from the leaderboard? This also deletes all their uploaded FIT activities.`)) return;
+    const res = await fetch(`/api/admin/athlete/${athleteId}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-password': adminPassword }
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast('Error: ' + data.error); return; }
+    document.getElementById(`row-${athleteId}`)?.remove();
+    showToast(`${name} removed.`);
+    // Show empty state if no rows left
+    const list = document.getElementById('athleteList');
+    if (!list.querySelector('.athlete-row')) {
+      list.innerHTML = '<div class="state-empty">No athletes.</div>';
+    }
+  }
+
+  // Enter key on password field
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('loginSection').style.display !== 'none') login();
+  });
+
+  // Auto-login if password saved in session
+  const saved = sessionStorage.getItem('adminPwd');
+  if (saved) {
+    document.getElementById('passwordInput').value = saved;
+    login();
+  }
+</script>
+</body>
+</html>
