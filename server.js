@@ -127,13 +127,6 @@ function mapAthlete(r) {
   };
 }
 
-async function saveAthleteIntervals(athleteId, name, apiKey, removeCode) {
-  await db.execute({
-    sql:  'INSERT OR REPLACE INTO athletes (athlete_id, name, api_key, remove_code, auth_type) VALUES (?, ?, ?, ?, ?)',
-    args: [athleteId, name, apiKey, removeCode, 'intervals'],
-  });
-}
-
 async function saveAthleteStrava(stravaId, name, accessToken, refreshToken, expiresAt, removeCode) {
   const athleteId = `strava_${stravaId}`;
   await db.execute({
@@ -207,39 +200,7 @@ async function getStravaActivities(athlete, year, month) {
   return activities;
 }
 
-// ── intervals.icu activities ──────────────────────────────────
-async function getIntervalsActivities(athlete, year, month) {
-  const pad     = n => String(n).padStart(2, '0');
-  const lastDay = new Date(year, month, 0).getDate();
-  const oldest  = `${year}-${pad(month)}-01`;
-  const newest  = `${year}-${pad(month)}-${lastDay}`;
 
-  const { data } = await axios.get(
-    `https://intervals.icu/api/v1/athlete/${athlete.athleteId}/activities`,
-    { auth: { username: 'API_KEY', password: athlete.apiKey }, params: { oldest, newest } }
-  );
-
-  if (data.length > 0) console.log(`[${athlete.name}] First activity raw:`, JSON.stringify(data[0]).slice(0, 200));
-
-  const rideTypes = ['ride','virtual','ebike','gravel','mountain','cycling','bike','velomobile'];
-  const activities = [];
-  for (const act of data) {
-    const type = ((act.type || act.sport_type || '')).toLowerCase();
-    if (rideTypes.some(t => type.includes(t))) {
-      activities.push({
-        id:           `icu_${act.id}`,
-        name:         act.name || 'Ride',
-        activityDate: (act.start_date_local || '').split('T')[0],
-        distanceKm:   Math.round((act.distance || 0) / 100) / 10,
-        elevationM:   Math.round(act.total_elevation_gain || 0),
-        durationS:    act.moving_time || act.elapsed_time || 0,
-        source:       'intervals',
-      });
-    }
-  }
-  console.log(`[${athlete.name}] intervals.icu: ${activities.length} rides`);
-  return activities;
-}
 
 // ── FIT helpers ───────────────────────────────────────────────
 async function getFitActivities(athleteId, year, month) {
@@ -297,8 +258,6 @@ async function fetchLeaderboard(year, month) {
         let sourceActivities = [];
         if (a.authType === 'strava' && a.stravaToken) {
           sourceActivities = await getStravaActivities(a, year, month);
-        } else if (a.authType === 'intervals' && a.apiKey) {
-          sourceActivities = await getIntervalsActivities(a, year, month);
         }
         const fitActivities = await getFitActivities(a.athleteId, year, month);
         const all = [...sourceActivities, ...fitActivities];
@@ -404,29 +363,6 @@ app.get('/auth/strava/callback', async (req, res) => {
   }
 });
 
-// ── intervals.icu join (kept for existing users) ──────────────
-app.post('/api/join', async (req, res) => {
-  const { athleteId, apiKey, name } = req.body;
-  if (!athleteId) return res.status(400).json({ error: 'athleteId is required' });
-  try {
-    let displayName;
-    if (apiKey) {
-      const profile = await axios.get(`https://intervals.icu/api/v1/athlete/${athleteId}`, { auth: { username: 'API_KEY', password: apiKey } });
-      displayName   = profile.data.name || `Athlete ${athleteId}`;
-    } else {
-      displayName = name;
-      if (!displayName) return res.status(400).json({ error: 'name required without API key' });
-    }
-    const removeCode = crypto.randomBytes(5).toString('hex');
-    await saveAthleteIntervals(athleteId, displayName, apiKey || '', removeCode);
-    res.json({ success: true, name: displayName, removeCode });
-  } catch (err) {
-    if (err.response?.status === 401 || err.response?.status === 403)
-      return res.status(401).json({ error: 'Invalid Athlete ID or API key.' });
-    res.status(500).json({ error: 'Could not connect to intervals.icu.' });
-  }
-});
-
 // Leave
 app.post('/api/leave', async (req, res) => {
   const { removeCode } = req.body;
@@ -453,8 +389,6 @@ app.get('/api/athlete/:id/activities', async (req, res) => {
   try {
     if (athlete.authType === 'strava' && athlete.stravaToken)
       sourceActivities = await getStravaActivities(athlete, now.getFullYear(), now.getMonth()+1);
-    else if (athlete.authType === 'intervals' && athlete.apiKey)
-      sourceActivities = await getIntervalsActivities(athlete, now.getFullYear(), now.getMonth()+1);
   } catch (err) { console.error('Activities fetch failed:', err.message); }
   const fitActivities = await getFitActivities(req.params.id, now.getFullYear(), now.getMonth()+1);
   const all = [...sourceActivities, ...fitActivities].sort((a,b) => a.activityDate?.localeCompare(b.activityDate));
